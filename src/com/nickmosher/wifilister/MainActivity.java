@@ -7,10 +7,13 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -31,34 +34,55 @@ public class MainActivity extends Activity {
         context = this;
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        networksList = wifiManager.getConfiguredNetworks();
         
-        linearLayout0 = (LinearLayout)findViewById(R.id.linearLayout0);
-        
-        View aView;
-        
-        /*
-         * Loop that generates 10 View items to try to fill up some of the scrolling space
-         */
-        for(int i = 0; i < 10; i++) {
-        	aView = inflater.inflate(R.layout.list_item, null, false);
-        	((TextView) aView).setText("Filler TextView");
-        	linearLayout0.addView(aView);
+        if(wifiManager.isWifiEnabled()) {
+        	networksList = wifiManager.getConfiguredNetworks();
+        	System.out.println("[DEBUG] Wifi enabled. networksList created.");
+        } else {
+        	if(wifiManager.setWifiEnabled(true)) {
+        		/*
+        		 * Currently if you have to turn the Wifi on, then getConfiguredNetworks() will
+        		 * return a null list and nothing shows that it's configured.
+        		 */
+        		networksList = wifiManager.getConfiguredNetworks();
+        		System.out.println("[DEBUG] Succeeded enabling Wifi. networksList created.");
+        	} else {
+        		System.err.println("[DEBUG] Failed to enable Wifi");
+        	}
         }
         
+        linearLayout0 = (LinearLayout)findViewById(R.id.linearLayout0);
+            
         /*
-         * Retrieves the names for configured SSIDs and sets them for the text of TextViews
+         * Retrieves the names for configured SSIDs and sets them for the text of Buttons
          */
-        Iterator<WifiConfiguration> iterator = networksList.iterator();
-        WifiConfiguration config;
-        while(iterator.hasNext()) {
-        	config = (WifiConfiguration) iterator.next();
-        	aView = inflater.inflate(R.layout.list_item, null, false);
-        	((TextView) aView).setText(config.SSID);
-        	linearLayout0.addView(aView);
+        if(networksList != null) {
+        	Iterator<WifiConfiguration> iterator = networksList.iterator();
+            WifiConfiguration config;
+            Button aButton;
+            while(iterator.hasNext()) {
+            	config = (WifiConfiguration) iterator.next();
+            	aButton = new Button(context);
+            	aButton.setText(config.SSID);
+            	aButton.setOnClickListener(new WifiConfigButtonClickListener(config.SSID));
+            	linearLayout0.addView(aButton);
+            }
+        } else {
+        	System.err.println("[DEBUG] networksList is NULL");
         }
     }
 
+    private void showDialog(String message) {
+    	new AlertDialog.Builder(this)
+    	.setMessage(message)
+    	.setPositiveButton(android.R.string.ok, 
+    			new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).show();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -67,4 +91,17 @@ public class MainActivity extends Activity {
         return true;
     }
     
+    class WifiConfigButtonClickListener implements View.OnClickListener {
+		
+    	String configString;
+    	
+    	public WifiConfigButtonClickListener(String configString) {
+    		this.configString = configString;
+    	}
+    	
+    	@Override
+		public void onClick(View v) {
+			showDialog(configString);
+		}
+    }
 }

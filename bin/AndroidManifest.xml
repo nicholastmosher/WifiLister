@@ -7,14 +7,19 @@
     <uses-sdk
         android:minSdkVersion="14"
         android:targetSdkVersion="18" />
-
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    
+    <uses-permission 
+        android:required="true"
+        android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission 
+        android:required="true"
+        android:name="android.permission.CHANGE_WIFI_STATE" />
     
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" android:permission="android.permission.ACCESS_WIFI_STATE">
+        android:theme="@style/AppTheme" >
         <activity
             android:name="com.nickmosher.wifilister.MainActivity"
             android:label="@string/app_name" >
