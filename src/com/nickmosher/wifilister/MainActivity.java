@@ -10,17 +10,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
+	private static String TAG = "[NICK:DEBUG] ";
+	
 	private Context context;
-	private LayoutInflater inflater;
 	private WifiManager wifiManager;
 	private List<WifiConfiguration>networksList;
 	
@@ -32,22 +31,27 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         context = this;
-        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         
         if(wifiManager.isWifiEnabled()) {
         	networksList = wifiManager.getConfiguredNetworks();
-        	System.out.println("[DEBUG] Wifi enabled. networksList created.");
+        	System.out.println(TAG + "Wifi enabled. networksList created.");
+        	
         } else {
         	if(wifiManager.setWifiEnabled(true)) {
-        		/*
-        		 * Currently if you have to turn the Wifi on, then getConfiguredNetworks() will
-        		 * return a null list and nothing shows that it's configured.
-        		 */
-        		networksList = wifiManager.getConfiguredNetworks();
-        		System.out.println("[DEBUG] Succeeded enabling Wifi. networksList created.");
+        		System.out.println(TAG + "Set Wifi Enabled");
+        		
+        		while(networksList == null) {
+    				System.out.println(TAG + "'networksList' is NULL");
+    				networksList = wifiManager.getConfiguredNetworks();
+    			}
+    			System.out.println(TAG + "'networksList' is not NULL");
+    			
+    			wifiManager.setWifiEnabled(false);
+    			System.out.println(TAG + "Set Wifi Disabled");
+        		
         	} else {
-        		System.err.println("[DEBUG] Failed to enable Wifi");
+        		System.err.println(TAG + "Failed to enable Wifi");
         	}
         }
         
@@ -68,7 +72,7 @@ public class MainActivity extends Activity {
             	linearLayout0.addView(aButton);
             }
         } else {
-        	System.err.println("[DEBUG] networksList is NULL");
+        	System.err.println(TAG + "'networksList' is NULL");
         }
     }
 
