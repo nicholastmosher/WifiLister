@@ -11,13 +11,16 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MainActivity extends Activity {
 
-	private static String TAG = "[NICK:DEBUG] ";
+	private static final String TAG = "[NICK:DEBUG] ";
+	
+	private static boolean isVerbose = false;
 	
 	private Context context;
 	private WifiManager wifiManager;
@@ -67,8 +70,8 @@ public class MainActivity extends Activity {
             while(iterator.hasNext()) {
             	config = (WifiConfiguration) iterator.next();
             	aButton = new Button(context);
-            	aButton.setText(config.SSID);
-            	aButton.setOnClickListener(new WifiConfigButtonClickListener(config.SSID));
+            	aButton.setText(config.SSID); //Name of the buttons are terse
+            	aButton.setOnClickListener(new WifiConfigButtonClickListener(config));
             	linearLayout0.addView(aButton);
             }
         } else {
@@ -95,17 +98,39 @@ public class MainActivity extends Activity {
         return true;
     }
     
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	if(item.getItemId() == R.id.mode_verbose) {
+    		isVerbose = true;
+    		return true;
+    	} else if(item.getItemId() == R.id.mode_terse) {
+    		isVerbose = false;
+    		return true;
+    	}
+    	return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * Custom listener class with custom constructor to pass a WifiConfiguration
+     * so that at the time of the button press, it can determine whether to
+     * use terse or verbose mode to show the dialog.
+     * @author Nick
+     *
+     */
     class WifiConfigButtonClickListener implements View.OnClickListener {
 		
-    	String configString;
+    	WifiConfiguration config;
     	
-    	public WifiConfigButtonClickListener(String configString) {
-    		this.configString = configString;
+    	public WifiConfigButtonClickListener(WifiConfiguration config) {
+    		this.config = config;
     	}
     	
     	@Override
 		public void onClick(View v) {
-			showDialog(configString);
+    		if(isVerbose) {
+    			showDialog(config.toString());
+    		} else {
+    			showDialog(config.SSID);
+    		}
 		}
     }
 }
