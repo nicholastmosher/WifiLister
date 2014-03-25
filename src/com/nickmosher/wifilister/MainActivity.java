@@ -10,6 +10,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,15 +20,14 @@ import android.widget.LinearLayout;
 
 public class MainActivity extends Activity {
 
-	private static final String TAG = "[NICK:DEBUG] ";
-	
-	private static boolean isVerbose = false;
+	public static final String TAG = "[NICK:DEBUG] ";
+	public static final String PREF_KEY_VERBOSE = "verbose";
 	
 	private Context context;
 	private WifiManager wifiManager;
 	private List<WifiConfiguration>networksList;
-	
 	private LinearLayout linearLayout0;
+	private SharedPreferences sharedPreferences;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +36,7 @@ public class MainActivity extends Activity {
         
         context = this;
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        sharedPreferences = getSharedPreferences("com.nickmosher.wifilister", Context.MODE_PRIVATE);
         
         if(wifiManager.isWifiEnabled()) {
         	networksList = wifiManager.getConfiguredNetworks();
@@ -58,7 +60,7 @@ public class MainActivity extends Activity {
         	}
         }
         
-        linearLayout0 = (LinearLayout)findViewById(R.id.linearLayout0);
+        linearLayout0 = (LinearLayout)findViewById(R.id.mainLinearLayout);
             
         /*
          * Retrieves the names for configured SSIDs and sets them for the text of Buttons
@@ -99,12 +101,9 @@ public class MainActivity extends Activity {
     }
     
     public boolean onOptionsItemSelected(MenuItem item) {
-    	if(item.getItemId() == R.id.mode_verbose) {
-    		isVerbose = true;
-    		return true;
-    	} else if(item.getItemId() == R.id.mode_terse) {
-    		isVerbose = false;
-    		return true;
+    	if(item.getItemId() == R.id.action_settings) {
+    		Intent intent = new Intent(this, Settings.class);
+    		startActivity(intent);
     	}
     	return super.onOptionsItemSelected(item);
     }
@@ -126,11 +125,12 @@ public class MainActivity extends Activity {
     	
     	@Override
 		public void onClick(View v) {
-    		if(isVerbose) {
+    		if(sharedPreferences.getBoolean(PREF_KEY_VERBOSE, false)) {
     			showDialog(config.toString());
     		} else {
     			showDialog(config.SSID);
     		}
+    		System.out.println(sharedPreferences.getBoolean(PREF_KEY_VERBOSE, false));
 		}
     }
 }
