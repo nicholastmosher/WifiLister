@@ -1,11 +1,14 @@
 package com.nickmosher.wifilister;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,8 +18,11 @@ import android.content.SharedPreferences;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 public class MainActivity extends Activity {
 
@@ -26,7 +32,6 @@ public class MainActivity extends Activity {
 	private Context context;
 	private WifiManager wifiManager;
 	private List<WifiConfiguration>networksList;
-	private LinearLayout linearLayout0;
 	private SharedPreferences sharedPreferences;
 	
     @Override
@@ -37,6 +42,9 @@ public class MainActivity extends Activity {
         context = this;
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         sharedPreferences = getSharedPreferences("com.nickmosher.wifilister", Context.MODE_PRIVATE);
+        final ListView listView = (ListView) findViewById(R.id.mainListView);
+        final ArrayList<String> list = new ArrayList<String>();
+        final ArrayList<WifiConfiguration> configs = new ArrayList<WifiConfiguration>();
         
         if(wifiManager.isWifiEnabled()) {
         	networksList = wifiManager.getConfiguredNetworks();
@@ -59,8 +67,6 @@ public class MainActivity extends Activity {
         		System.err.println(TAG + "Failed to enable Wifi");
         	}
         }
-        
-        linearLayout0 = (LinearLayout)findViewById(R.id.mainLinearLayout);
             
         /*
          * Retrieves the names for configured SSIDs and sets them for the text of Buttons
@@ -68,18 +74,41 @@ public class MainActivity extends Activity {
         if(networksList != null) {
         	Iterator<WifiConfiguration> iterator = networksList.iterator();
             WifiConfiguration config;
-            Button aButton;
             while(iterator.hasNext()) {
             	config = (WifiConfiguration) iterator.next();
-            	aButton = new Button(context);
-            	aButton.setText(config.SSID); //Name of the buttons are terse
-            	aButton.setOnClickListener(new WifiConfigButtonClickListener(config));
-            	linearLayout0.addView(aButton);
+            	list.add(config.SSID);
+            	configs.add(config);
             }
         } else {
         	System.err.println(TAG + "'networksList' is NULL");
         }
+        
+        final StableArrayAdapter adapter = new StableArrayAdapter(this,
+        		android.R.layout.simple_list_item_1, list);
+        listView.setAdapter(adapter);
+        
+        listView.setOnItemClickListener(new WifiConfigItemClickListener(configs));
     }
+   
+private class StableArrayAdapter extends ArrayAdapter<String> {
+	HashMap<String, Integer> idMap = new HashMap<String, Integer>();
+	
+	public StableArrayAdapter(Context context, int resId, List<String> objects) {
+		super(context, resId, objects);
+		for(int i = 0; i < objects.size(); ++i) {
+			idMap.put(objects.get(i), i);
+		}
+	}
+	
+	public long getItemId(int position) {
+		String item = getItem(position);
+		return idMap.get(item);
+	}
+	
+	public boolean hasStableIds() {
+		return true;
+	}
+}
 
     private void showDialog(String message) {
     	new AlertDialog.Builder(this)
@@ -115,20 +144,22 @@ public class MainActivity extends Activity {
      * @author Nick
      *
      */
-    class WifiConfigButtonClickListener implements View.OnClickListener {
+    class WifiConfigItemClickListener implements AdapterView.OnItemClickListener {
 		
-    	WifiConfiguration config;
+    	ArrayList<WifiConfiguration> list;
     	
-    	public WifiConfigButtonClickListener(WifiConfiguration config) {
-    		this.config = config;
+    	public WifiConfigItemClickListener(ArrayList<WifiConfiguration> wifiList) {
+    		this.list = wifiList;
     	}
-    	
-    	@Override
-		public void onClick(View v) {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position,
+				long id) {
+    		
     		if(sharedPreferences.getBoolean(PREF_KEY_VERBOSE, false)) {
-    			showDialog(config.toString());
+    			showDialog(list.get(position).toString());
     		} else {
-    			showDialog(config.SSID);
+    			showDialog(list.get(position).SSID);
     		}
     		System.out.println(sharedPreferences.getBoolean(PREF_KEY_VERBOSE, false));
 		}
